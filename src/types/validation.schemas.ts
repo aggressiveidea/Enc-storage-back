@@ -8,9 +8,8 @@ export const RegisterSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(50, "First name too long"),
   lastName: z.string().min(1, "Last name is required").max(50, "Last name too long"),
   role: z.enum(["user", "admin"]).optional().default("user"),
-  num_nat: z.number(),
-  address: z.string(),
-  receiptUrl: z.string().url(),
+  public_key: z.string().optional().default("test"),
+  private_key: z.string().optional().default("test"),
 })
 
 export const LoginSchema = z.object({

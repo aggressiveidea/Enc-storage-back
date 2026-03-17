@@ -27,8 +27,8 @@ export class UserController{
         }
       }
     
-      static async getUserByID(req: Request<UserParams>, res: Response, next: NextFunction): Promise<void> {
-        const userID: string = req.params.id
+      static async getUserByID(req: Request, res: Response, next: NextFunction): Promise<void> {
+        const userID: string = req.params.id as string
         try {
           const user = await UserService.getUserByID(userID)
           if (!user) {
@@ -47,8 +47,8 @@ export class UserController{
           res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
         }
       }
-      static async updateUser(req: Request<UserParams>, res: Response, next: NextFunction): Promise<void> {
-        const userID: string = req.params.id
+      static async updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+        const userID: string = req.params.id as string
         const userData = req.body
         try {
           const updateUser = await UserService.UpdateUser(userID, userData)
@@ -69,8 +69,8 @@ export class UserController{
         }
       }
     
-      static async deleteUser(req:Request<UserParams>, res: Response, next: NextFunction): Promise<void> {
-        const userID: string = req.params.id
+      static async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+        const userID: string = req.params.id as string
         try {
           const deletedUser = await UserService.DeleteUser(userID)
           if (!deletedUser) {

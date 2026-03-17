@@ -4,15 +4,13 @@ export declare interface User {
   _id?: string | Types.ObjectId
   email: string
   password: string
-  num_nat: number
-  receiptUrl?: string
   firstName: string
   lastName: string
   role: string
-  address: string
+  public_key: string
+  private_key: string
   createdAt?: Date
   updatedAt?: Date
-
 }
 
 export declare interface Sheep {

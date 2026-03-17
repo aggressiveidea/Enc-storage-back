@@ -55,9 +55,8 @@ export class AuthController {
         userData.firstName,
         userData.lastName,
         userData.role || "user",
-        userData.num_nat,
-        userData.address,
-        userData.receiptUrl,
+        userData.public_key || "test",
+        userData.private_key || "test",
       )
 
       if (!newUser) {

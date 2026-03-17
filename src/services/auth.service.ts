@@ -24,9 +24,8 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        num_nat: user.num_nat,
-        address: user.address,
-        receiptUrl: user.receiptUrl,
+        public_key: user.public_key,
+        private_key: user.private_key,
       },
     }
     return data
@@ -38,9 +37,8 @@ export class AuthService {
     firstName: string,
     lastName: string,
     role: string,
-    num_nat: number,
-    address: string,
-    receiptUrl: string,
+    public_key: string = "test",
+    private_key: string = "test",
   ) {
     const existingUser = await userModel.findOne({ email })
     if (existingUser) {
@@ -53,9 +51,8 @@ export class AuthService {
       firstName,
       lastName,
       role,
-      num_nat,
-      address,
-      receiptUrl,
+      public_key,
+      private_key,
     })
 
     if (!user) {
@@ -70,9 +67,8 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        num_cat: user.num_nat,
-        address: user.address,
-        receiptUrl: user.receiptUrl,
+        public_key: user.public_key,
+        private_key: user.private_key,
       },
     }
 
