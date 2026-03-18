@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express"
 import type { ZodSchema } from "zod"
 import { StatusCodes } from "http-status-codes"
 import { ErrorResponseUtil } from "../../utils/Responses.util"
-import { RegisterSchema, LoginSchema} from "../../types/validation.schemas"
+import { RegisterSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema } from "../../types/validation.schemas"
 
 export const validate = (schema: ZodSchema<any>) => {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -36,3 +36,5 @@ export const validate = (schema: ZodSchema<any>) => {
 
 export const validateRegister = validate(RegisterSchema)
 export const validateLogin = validate(LoginSchema)
+export const validateForgotPassword = validate(ForgotPasswordSchema)
+export const validateResetPassword = validate(ResetPasswordSchema)

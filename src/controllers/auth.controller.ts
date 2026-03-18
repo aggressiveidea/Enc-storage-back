@@ -77,4 +77,45 @@ export class AuthController {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
     }
   }
-}
+
+  static async ForgotPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email } = req.body;
+      const result = await AuthService.RequestPasswordReset(email);
+      const response = new SuccessResponseUtil({
+        message: result.message || "If an account with that email exists, a reset link has been sent.",
+        data: result
+      })
+      res.status(StatusCodes.OK).json(response);
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      const errorResponse = new ErrorResponseUtil().setError("Failed to process forgot password request");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+
+  static async ResetPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { password } = req.body;
+      const { token } = req.params;
+
+      const result = await AuthService.ResetPassword(token, password);
+      
+      if (!result.success) {
+        const error = new ErrorResponseUtil().setError(result.message);
+        res.status(StatusCodes.BAD_REQUEST).json(error);
+        return;
+      }
+
+      const response = new SuccessResponseUtil({
+        message: result.message,
+        data: null
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error) {
+      console.error("Reset password error:", error);
+      const errorResponse = new ErrorResponseUtil().setError("Failed to reset password");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+}

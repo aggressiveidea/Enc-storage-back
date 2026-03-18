@@ -41,6 +41,14 @@ export const Userschema = new Schema<User>({
     trim: true,
     required: true,
     default: 'test'
+  },
+  resetPasswordToken: {
+    type: String,
+    required: false
+  },
+  resetPasswordExpires: {
+    type: Date,
+    required: false
   }
 },
   {

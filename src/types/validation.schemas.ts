@@ -16,3 +16,14 @@ export const LoginSchema = z.object({
   email: z.string().email("invalid email format"),
   password: z.string().min(1, "password is required"),
 })
+
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email("invalid email format"),
+})
+
+export const ResetPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, "password must be at least 8 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain uppercase, lowercase, and number"),
+})

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>password reset</title>
+</head>
+<style>
+    *{
+        padding: 0%;
+        margin: 0%;
+        box-sizing: border-box;
+    }
+    body{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #f0f0f0;
+    }
+    div{
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    h1{
+        margin-bottom: 10px;
+        color: #333;
+    }
+    p{
+        margin-bottom: 20px;
+        color: #666;
+    }
+    a{
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007BFF;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+    }
+</style>
+<body>
+    <div>
+        <h1>Password Reset</h1>
+        <p>Click the link below to reset your password:</p>
+        <a href="{{ reset_link }}">Reset Password</a>
+    </div>
+</body>
+</html>

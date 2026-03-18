@@ -9,6 +9,8 @@ export declare interface User {
   role: string
   public_key: string
   private_key: string
+  resetPasswordToken?: string
+  resetPasswordExpires?: Date
   createdAt?: Date
   updatedAt?: Date
 }
