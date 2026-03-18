@@ -13,37 +13,6 @@ export declare interface User {
   updatedAt?: Date
 }
 
-export declare interface Sheep {
-  _id?: string | Types.ObjectId
-  price: number
-  race: string
-  origin: string
-  weight: number
-  age: number
-  imageUrl?: string
-  health?: string
-  statue?: string
-}
-
-export declare interface PointDeVente {
-  _id?: string | Types.ObjectId
-  weather?: string
-  location?: string
-  name?: string
-  createdAt?: Date
-  updatedAt?: Date
-}
-
-export declare interface UserRDV {
-  _id?: string | Types.ObjectId
-  userId: string | Types.ObjectId
-  pointDeVenteId: string | Types.ObjectId
-  date: Date
-  status: string
-  createdAt?: Date
-  updatedAt?: Date
-}
-
 export declare interface EmailTemplateData {
   userName: string
   formattedDate: string
