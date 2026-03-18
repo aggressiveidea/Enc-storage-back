@@ -2,6 +2,7 @@ import { userModel } from "../config/models/User.model"
 import { bcryptUtil } from "../utils/bcrypt.utils"
 import { JwtUtil } from "../utils/jwt.utils"
 import crypto from "crypto"
+import { EmailService } from "./email.service"
 
 export class AuthService {
   static async Login(email: string, password: string) {
@@ -89,15 +90,12 @@ export class AuthService {
       resetPasswordExpires: resetTokenExpiry,
     })
 
+    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
+    await EmailService.sendPasswordResetEmail(user.email, resetLink);
+
     return {
       success: true,
-      resetToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      },
+      message: "If an account with that email exists, a reset link has been sent."
     }
   }
 
