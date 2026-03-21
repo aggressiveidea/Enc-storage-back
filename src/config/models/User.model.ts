@@ -1,58 +1,57 @@
-import { Schema, model } from 'mongoose';
-import { User } from '../../types/globals';
-import { request } from 'node:http';
+import { Schema, model } from "mongoose";
+import { User } from "../../types/globals";
 
-export const Userschema = new Schema<User>({
-  email: {
-    type: String,
-    trim: true,
-    required: true
+export const UserSchema = new Schema<User>(
+  {
+    email: {
+      type: String,
+      trim: true,
+      required: true,
+      unique: true,
+      lowercase: true,
+    },
+    password: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    firstName: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    lastName: {
+      type: String,
+      trim: true,
+      required: true,
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+    publicKey: {
+      type: String,
+      required: true,
+    },
+    storageQuota: {
+      type: Number,
+      default: 1_000_000_000, // 1 GB par example
+    },
+    storageUsed: {
+      type: Number,
+      default: 0,
+    },
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
   },
-  password: {
-    type: String,
-    trim: true,
-    required: true
-  },
-  firstName: {
-    type: String,
-    trim: true,
-    required: true
-  },
-  lastName: {
-    type: String,
-    trim: true,
-    required: true
-  },
-  role: {
-    type: String,
-    trim: true,
-    required: false,
-    enum: ['user', 'admin'], //user is the client while admin is in the server for now
-    default: 'user'
-  },
-  public_key: {
-    type: String,
-    trim: true,
-    required: true,
-    default: 'test'
-  },
-  private_key: {
-    type: String,
-    trim: true,
-    required: true,
-    default: 'test'
-  },
-  resetPasswordToken: {
-    type: String,
-    required: false
-  },
-  resetPasswordExpires: {
-    type: Date,
-    required: false
-  }
-},
   {
     timestamps: true,
   }
 );
-export const userModel = model<User>("user", Userschema);
+
+export const userModel = model<User>("user", UserSchema);

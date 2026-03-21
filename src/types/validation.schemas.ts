@@ -3,13 +3,12 @@ export const RegisterSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z
     .string()
-    .min(8, "password must be at least 8 characters")
+    .min(8, "Password must be at least 8 characters")
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain uppercase, lowercase, and number"),
   firstName: z.string().min(1, "First name is required").max(50, "First name too long"),
   lastName: z.string().min(1, "Last name is required").max(50, "Last name too long"),
   role: z.enum(["user", "admin"]).optional().default("user"),
-  public_key: z.string().optional().default("test"),
-  private_key: z.string().optional().default("test"),
+  publicKey: z.string().min(1, "Public key is required"),
 })
 
 export const LoginSchema = z.object({

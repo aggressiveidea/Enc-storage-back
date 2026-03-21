@@ -7,12 +7,37 @@ export declare interface User {
   firstName: string
   lastName: string
   role: string
-  public_key: string
-  private_key: string
+  publicKey: string
   resetPasswordToken?: string
   resetPasswordExpires?: Date
+  storageQuota: number
+  storageUsed: number
   createdAt?: Date
   updatedAt?: Date
+}
+
+export declare interface AuthUser {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  role: string
+  publicKey: string
+  storageUsed: number
+  storageQuota: number
+}
+
+export declare interface File {
+  ownerId: Types.ObjectId
+  filename: string
+  originalName: string
+  mimeType: string
+  size: number
+  encryptedPath: string
+  encryptedKey: string  
+  iv: string            
+  authTag: string       
+  createdAt?: Date
 }
 
 export declare interface EmailTemplateData {

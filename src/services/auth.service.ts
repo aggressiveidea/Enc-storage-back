@@ -25,8 +25,9 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        public_key: user.public_key,
-        private_key: user.private_key,
+        publicKey: user.publicKey,
+        storageUsed: user.storageUsed,
+        storageQuota: user.storageQuota,
       },
     }
     return data
@@ -38,8 +39,7 @@ export class AuthService {
     firstName: string,
     lastName: string,
     role: string,
-    public_key: string = "test",
-    private_key: string = "test",
+    publicKey: string,
   ) {
     const existingUser = await userModel.findOne({ email })
     if (existingUser) {
@@ -52,8 +52,7 @@ export class AuthService {
       firstName,
       lastName,
       role,
-      public_key,
-      private_key,
+      publicKey,
     })
 
     if (!user) {
@@ -68,8 +67,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        public_key: user.public_key,
-        private_key: user.private_key,
+        publicKey: user.publicKey,
       },
     }
 
@@ -89,7 +87,7 @@ export class AuthService {
       resetPasswordToken: resetToken,
       resetPasswordExpires: resetTokenExpiry,
     })
-
+    //hna i will change it b front url li aw f .env 
     const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
     await EmailService.sendPasswordResetEmail(user.email, resetLink);
 

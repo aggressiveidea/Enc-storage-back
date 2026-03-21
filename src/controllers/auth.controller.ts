@@ -25,9 +25,9 @@ export class AuthController {
       })
 
       res.status(StatusCodes.OK).json(success)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error)
-      const errorResponse = new ErrorResponseUtil().setError("Database connection error")
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Database connection error")
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
     }
   }
@@ -35,33 +35,18 @@ export class AuthController {
     try {
       const userData = req.body
 
-      if (!userData) {
-        const error = new ErrorResponseUtil().setError("no user data")
-        res.status(StatusCodes.BAD_REQUEST).json(error)
-        return
-      }
-
-      const user = await userModel.findOne({ email: userData.email })
-
-      if (user) {
-        const error = new ErrorResponseUtil().setError("user already exists")
-        res.status(StatusCodes.BAD_REQUEST).json(error)
-        return
-      }
-
       const newUser = await AuthService.RegisterUser(
         userData.email,
         userData.password,
         userData.firstName,
         userData.lastName,
         userData.role || "user",
-        userData.public_key || "test",
-        userData.private_key || "test",
+        userData.publicKey,
       )
 
       if (!newUser) {
-        const error = new ErrorResponseUtil().setError("Failed to create user")
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+        const error = new ErrorResponseUtil().setError("A user with this email already exists")
+        res.status(StatusCodes.CONFLICT).json(error)
         return
       }
 
@@ -71,9 +56,11 @@ export class AuthController {
       })
 
       res.status(StatusCodes.CREATED).json(success)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error)
-      const errorResponse = new ErrorResponseUtil().setError("Database connection error")
+      // extracting Mongoose validation error message psq ugh
+      const msg = error.name === 'ValidationError' ? Object.values(error.errors).map((e: any) => e.message).join(', ') : (error.message || "Database connection error")
+      const errorResponse = new ErrorResponseUtil().setError(msg)
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
     }
   }
@@ -118,4 +105,4 @@ export class AuthController {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
     }
   }
-}
+}
