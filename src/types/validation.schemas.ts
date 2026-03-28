@@ -7,13 +7,17 @@ export const RegisterSchema = z.object({
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain uppercase, lowercase, and number"),
   firstName: z.string().min(1, "First name is required").max(50, "First name too long"),
   lastName: z.string().min(1, "Last name is required").max(50, "Last name too long"),
-  role: z.enum(["user", "admin"]).optional().default("user"),
+  role: z.enum(["user", "admin", "super_admin"]).optional().default("user"),
   publicKey: z.string().min(1, "Public key is required"),
 })
 
 export const LoginSchema = z.object({
   email: z.string().email("invalid email format"),
   password: z.string().min(1, "password is required"),
+})
+
+export const UpdateUserRoleSchema = z.object({
+  role: z.enum(["user", "admin", "super_admin"]),
 })
 
 export const ForgotPasswordSchema = z.object({

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { authMiddleware } from "../middlewares/validators/auth.middleware";
-import {uploadFile,getFiles,downloadFile,deleteFile,getStats,} from "../controllers/file.controller";
+import {uploadFile,getFiles,downloadFile,deleteFile,getStats,getGlobalFiles} from "../controllers/file.controller";
 
 const storage = multer.memoryStorage();
 export const upload = multer({
@@ -14,6 +14,7 @@ const router = Router();
 router.use(authMiddleware.checkAuth);
 
 router.post("/upload", upload.single("file"), uploadFile);
+router.get("/global", authMiddleware.checkSuperAdmin, getGlobalFiles);
 router.get("/", getFiles);
 router.post("/download/:id", downloadFile); 
 router.delete("/:id", deleteFile);

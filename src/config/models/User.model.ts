@@ -27,7 +27,7 @@ export const UserSchema = new Schema<User>(
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "super_admin"],
       default: "user",
     },
     publicKey: {

@@ -3,6 +3,7 @@ import { StatusCodes } from "http-status-codes"
 import { SuccessResponseUtil, ErrorResponseUtil } from "../utils/Responses.util"
 import type { Request, Response, NextFunction } from "express"
 import { userModel } from "../config/models/User.model"
+import { AuditService } from "../services/audit.service"
 
 export class AuthController {
   static async login(req: Request, res: Response, next: NextFunction) {
@@ -18,6 +19,14 @@ export class AuthController {
         res.status(StatusCodes.UNAUTHORIZED).json(error)
         return
       }
+
+      /*
+      await AuditService.log({
+        user: (data.user as any).id || (data as any).id,
+        action: "LOGIN",
+        status: "SUCCESS"
+      })
+      */
 
       const success = new SuccessResponseUtil({
         message: "Login successful",
@@ -49,6 +58,14 @@ export class AuthController {
         res.status(StatusCodes.CONFLICT).json(error)
         return
       }
+
+      /*
+      await AuditService.log({
+        user: (newUser as any)._id,
+        action: "REGISTER",
+        status: "SUCCESS"
+      })
+      */
 
       const success = new SuccessResponseUtil({
         message: "Registration successful",

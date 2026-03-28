@@ -1,9 +1,8 @@
 import { Request, Response } from "express";
 import fs from "fs";
 import path from "path";
-import { encryptFile } from "../utils/encryptFile";
-import { decryptFile } from "../utils/decryptFile";
 import { FileService } from "../services/file.service";
+import { AuditService } from "../services/audit.service";
 
 const ENCRYPTED_DIR = path.join(process.cwd(), "public", "encrypted");
 
@@ -18,8 +17,13 @@ export const uploadFile = async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: "No file uploaded" });
     }
 
+    const { encryptedKey, iv, authTag } = req.body;
+    if (!encryptedKey || !iv || !authTag) {
+      return res.status(400).json({ success: false, error: "Encryption metadata (key, iv, authTag) is required" });
+    }
+
     const user = req.user!;
-    const fileBuffer = req.file.buffer;
+    const encryptedFileBuffer = req.file.buffer;
     const originalName = req.file.originalname;
     const mimeType = req.file.mimetype;
     const size = req.file.size;
@@ -28,12 +32,10 @@ export const uploadFile = async (req: Request, res: Response) => {
       return res.status(413).json({ success: false, error: "Storage quota exceeded" });
     }
 
-    const { encryptedFile, encryptedKey, iv, authTag } = encryptFile(fileBuffer, user.publicKey);
-
     const uniqueId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     const filename = `${uniqueId}.enc`;
     const encryptedPath = path.join(ENCRYPTED_DIR, filename);
-    fs.writeFileSync(encryptedPath, encryptedFile);
+    fs.writeFileSync(encryptedPath, encryptedFileBuffer);
 
     const fileRecord = await FileService.saveFile({
       ownerId: user.id,
@@ -42,14 +44,25 @@ export const uploadFile = async (req: Request, res: Response) => {
       mimeType,
       size,
       encryptedPath,
-      encryptedKey: encryptedKey.toString("base64"),
-      iv: iv.toString("base64"),
-      authTag: authTag.toString("base64"),
+      encryptedKey,
+      iv,
+      authTag,
     });
+
+    /*
+    await AuditService.log({
+      user: user.id,
+      action: "UPLOAD",
+      resourceId: (fileRecord._id as any).toString(),
+      resourceName: fileRecord.originalName,
+      status: "SUCCESS",
+      metadata: { size: fileRecord.size, mimeType: fileRecord.mimeType }
+    });
+    */
 
     return res.status(201).json({
       success: true,
-      message: "File encrypted and stored successfully",
+      message: "Encrypted file stored successfully",
       file: {
         id: fileRecord._id,
         originalName: fileRecord.originalName,
@@ -59,8 +72,8 @@ export const uploadFile = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error("Upload error:", error);
-    return res.status(500).json({ success: false, error: "Failed to upload and encrypt file" });
+    console.error("UPLOAD CONTROLLER ERROR:", error);
+    return res.status(500).json({ success: false, error: error.message || "Failed to store encrypted file" });
   }
 };
 
@@ -78,6 +91,9 @@ export const getFiles = async (req: Request, res: Response) => {
         mimeType: f.mimeType,
         size: f.size,
         createdAt: f.createdAt,
+        encryptedKey: f.encryptedKey,
+        iv: f.iv,
+        authTag: f.authTag,
       })),
       stats,
     });
@@ -96,31 +112,32 @@ export const downloadFile = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: "File not found" });
     }
 
-    const privateKey = req.body?.privateKey as string;
-    if (!privateKey) {
-      return res.status(400).json({ success: false, error: "Private key required for decryption" });
-    }
-
     if (!fs.existsSync(fileRecord.encryptedPath)) {
       return res.status(404).json({ success: false, error: "Encrypted file not found on disk" });
     }
 
     const encryptedBytes = fs.readFileSync(fileRecord.encryptedPath);
-    const iv = Buffer.from(fileRecord.iv, "base64");
-    const authTag = Buffer.from(fileRecord.authTag, "base64");
-    const encryptedKey = Buffer.from(fileRecord.encryptedKey, "base64");
-
-    let decrypted: Buffer;
-    try {
-      decrypted = decryptFile(encryptedBytes, authTag, iv, encryptedKey, privateKey);
-    } catch (decryptErr) {
-      return res.status(422).json({ success: false, error: "Decryption failed — wrong key or corrupted file" });
-    }
 
     res.setHeader("Content-Type", fileRecord.mimeType || "application/octet-stream");
     res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileRecord.originalName)}"`);
-    res.setHeader("Content-Length", decrypted.length.toString());
-    return res.end(decrypted);
+    res.setHeader("Content-Length", encryptedBytes.length.toString());
+    
+    // Send encryption metadata in custom headers
+    res.setHeader("x-encrypted-key", fileRecord.encryptedKey);
+    res.setHeader("x-iv", fileRecord.iv);
+    res.setHeader("x-auth-tag", fileRecord.authTag);
+
+    /*
+    await AuditService.log({
+      user: req.user!.id,
+      action: "DOWNLOAD",
+      resourceId: (fileRecord._id as any).toString(),
+      resourceName: fileRecord.originalName,
+      status: "SUCCESS"
+    });
+    */
+
+    return res.end(encryptedBytes);
   } catch (error) {
     console.error("Download error:", error);
     return res.status(500).json({ success: false, error: "Failed to download file" });
@@ -141,6 +158,16 @@ export const deleteFile = async (req: Request, res: Response) => {
       fs.unlinkSync(result.encryptedPath);
     }
 
+    /*
+    await AuditService.log({
+      user: req.user!.id,
+      action: "DELETE",
+      resourceId: (result._id as any).toString(),
+      resourceName: result.originalName,
+      status: "SUCCESS"
+    });
+    */
+
     return res.json({ success: true, message: "File deleted successfully" });
   } catch (error) {
     console.error("Delete error:", error);
@@ -155,5 +182,28 @@ export const getStats = async (req: Request, res: Response) => {
     return res.json({ success: true, stats });
   } catch (error) {
     return res.status(500).json({ success: false, error: "Failed to get stats" });
+  }
+};
+
+export const getGlobalFiles = async (req: Request, res: Response) => {
+  try {
+    const files = await FileService.getAllGlobalFiles();
+    const stats = await FileService.getGlobalStats();
+
+    return res.json({
+      success: true,
+      files: files.map((f: any) => ({
+        id: f._id,
+        ownerId: f.ownerId,
+        originalName: f.originalName,
+        mimeType: f.mimeType,
+        size: f.size,
+        createdAt: f.createdAt,
+      })),
+      stats,
+    });
+  } catch (error) {
+    console.error("Get global files error:", error);
+    return res.status(500).json({ success: false, error: "Failed to retrieve global files" });
   }
 };

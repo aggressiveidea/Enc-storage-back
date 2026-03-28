@@ -89,4 +89,33 @@ export class UserController{
           res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
         }
       }
+
+      static async updateRole(req: Request, res: Response, next: NextFunction): Promise<void> {
+        const userID: string = req.params.id as string;
+        const { role } = req.body;
+        
+        if (!["user", "admin", "super_admin"].includes(role)) {
+          const errorResponse = new ErrorResponseUtil().setError("invalid role");
+          res.status(StatusCodes.BAD_REQUEST).json(errorResponse);
+          return;
+        }
+
+        try {
+          const updatedUser = await UserService.UpdateUser(userID, { role });
+          if (!updatedUser) {
+            const errorResponse = new ErrorResponseUtil().setError("user not found");
+            res.status(StatusCodes.NOT_FOUND).json(errorResponse);
+            return;
+          }
+          const successResponse = new SuccessResponseUtil({
+            message: "user role updated successfully",
+            data: updatedUser,
+          });
+          res.status(StatusCodes.OK).json(successResponse);
+        } catch (error) {
+          console.error("Error updating user role:", error);
+          const errorResponse = new ErrorResponseUtil().setError("Failed to update user role");
+          res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+        }
+      }
 }

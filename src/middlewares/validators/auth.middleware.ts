@@ -69,8 +69,28 @@ export class authMiddleware {
   static async checkAdmin(req: Request, res: Response, next: NextFunction) {
     try {
       await authMiddleware.checkAuth(req, res, () => {
-        if (!req.user || req.user.role !== "admin") {
+        if (!req.user || (req.user.role !== "admin" && req.user.role !== "super_admin")) {
           const error = new ErrorResponseUtil().setError("admin access required")
+          res.status(StatusCodes.FORBIDDEN).json(error)
+          return
+        }
+        next()
+      })
+    } catch (error) {
+      console.error("access error:", error)
+      const errorResponse = new ErrorResponseUtil().setError("authentication error")
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
+    }
+  }
+
+  /**
+   * @description middleware to check if user is super_admin
+   */
+  static async checkSuperAdmin(req: Request, res: Response, next: NextFunction) {
+    try {
+      await authMiddleware.checkAuth(req, res, () => {
+        if (!req.user || req.user.role !== "super_admin") {
+          const error = new ErrorResponseUtil().setError("super admin access required")
           res.status(StatusCodes.FORBIDDEN).json(error)
           return
         }

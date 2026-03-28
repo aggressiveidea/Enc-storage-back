@@ -5,9 +5,11 @@ import path from "path";
 import authRouter from "./routers/auth.router";
 import UserRouter from "./routers/User.router";
 import fileRouter from "./routers/file.routes";
+import auditRouter from "./routers/audit.router";
 import { connect } from "./config/db";
 import morgan from "morgan";
 import cors from "cors";
+import helmet from "helmet";
 
 const app = express();
 const PORT = process.env.PORT;
@@ -23,18 +25,21 @@ connect().catch((error) => {
   console.error("Failed to connect to database:", error.message);
   process.exit(1);
 });
-const URL = process.env.FRONT_URL;
+const FRONT_URL = process.env.FRONT_URL;
 
-if (!URL) {
+if (!FRONT_URL) {
   throw new Error("FRONT_URL is missing in .env");
 }
+
+app.use(helmet()); 
 app.use(express.json({ limit: "10mb" })); 
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: [URL],
+    origin: [FRONT_URL],
     methods: "GET,POST,PUT,DELETE,PATCH",
     allowedHeaders: "Content-Type,Authorization",
+    exposedHeaders: "x-iv,x-auth-tag,x-encrypted-key",
     credentials: true,
   })
 );
@@ -42,6 +47,8 @@ app.use(
 app.use("/api/auth", authRouter);
 app.use("/api/user", UserRouter);
 app.use("/api/file", fileRouter);
+app.use("/api/audit", auditRouter);
+console.log("DEBUG: Audit routes registered");
 
 app.get("/health", (req, res) => {
   res.status(200).json({ message: "Server is running!", port: PORT });

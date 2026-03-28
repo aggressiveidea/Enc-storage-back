@@ -62,7 +62,7 @@ export class FileService {
       $inc: { storageUsed: -file.size },
     });
 
-    return { encryptedPath: file.encryptedPath, size: file.size };
+    return file;
   }
 
 
@@ -75,6 +75,23 @@ export class FileService {
     return {
       storageUsed: user?.storageUsed ?? 0,
       storageQuota: user?.storageQuota ?? 1_000_000_000,
+      fileCount,
+    };
+  }
+
+  static async getAllGlobalFiles() {
+    return FileModel.find()
+      .sort({ createdAt: -1 })
+      .select("-__v")
+      .lean();
+  }
+
+  static async getGlobalStats() {
+    const users = await userModel.find().select("storageUsed").lean();
+    const totalStorageUsed = users.reduce((acc, user) => acc + (user.storageUsed || 0), 0);
+    const fileCount = await FileModel.countDocuments();
+    return {
+      totalStorageUsed,
       fileCount,
     };
   }
