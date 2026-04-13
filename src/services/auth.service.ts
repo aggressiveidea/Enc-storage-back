@@ -26,6 +26,7 @@ export class AuthService {
         lastName: user.lastName,
         role: user.role,
         publicKey: user.publicKey,
+        encryptedPrivateKey: user.encryptedPrivateKey,
         storageUsed: user.storageUsed,
         storageQuota: user.storageQuota,
       },
@@ -40,6 +41,7 @@ export class AuthService {
     lastName: string,
     role: string,
     publicKey: string,
+    encryptedPrivateKey: string,
   ) {
     const existingUser = await userModel.findOne({ email })
     if (existingUser) {
@@ -53,6 +55,7 @@ export class AuthService {
       lastName,
       role,
       publicKey,
+      encryptedPrivateKey,
     })
 
     if (!user) {
@@ -68,6 +71,7 @@ export class AuthService {
         lastName: user.lastName,
         role: user.role,
         publicKey: user.publicKey,
+        encryptedPrivateKey: user.encryptedPrivateKey,
       },
     }
 

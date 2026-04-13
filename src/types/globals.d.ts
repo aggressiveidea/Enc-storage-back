@@ -8,6 +8,7 @@ export declare interface User {
   lastName: string
   role: string
   publicKey: string
+  encryptedPrivateKey: string
   resetPasswordToken?: string
   resetPasswordExpires?: Date
   storageQuota: number
@@ -23,6 +24,7 @@ export declare interface AuthUser {
   lastName: string
   role: string
   publicKey: string
+  encryptedPrivateKey: string
   storageUsed: number
   storageQuota: number
 }

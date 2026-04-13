@@ -51,6 +51,7 @@ export class AuthController {
         userData.lastName,
         userData.role || "user",
         userData.publicKey,
+        userData.encryptedPrivateKey,
       )
 
       if (!newUser) {

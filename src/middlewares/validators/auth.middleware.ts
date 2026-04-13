@@ -51,6 +51,7 @@ export class authMiddleware {
         lastName: user.lastName,
         role: user.role,
         publicKey: user.publicKey,
+        encryptedPrivateKey: user.encryptedPrivateKey,
         storageUsed: user.storageUsed ?? 0,
         storageQuota: user.storageQuota ?? 1000000000,
       }

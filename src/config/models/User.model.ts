@@ -34,6 +34,10 @@ export const UserSchema = new Schema<User>(
       type: String,
       required: true,
     },
+    encryptedPrivateKey: {
+      type: String,
+      required: true,
+    },
     storageQuota: {
       type: Number,
       default: 1_000_000_000, // 1 GB par example

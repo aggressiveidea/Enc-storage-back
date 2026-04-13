@@ -60,6 +60,7 @@ export const uploadFile = async (req: Request, res: Response) => {
     });
     */
 
+    const stats = await FileService.getStorageStats(user.id);
     return res.status(201).json({
       success: true,
       message: "Encrypted file stored successfully",
@@ -70,6 +71,7 @@ export const uploadFile = async (req: Request, res: Response) => {
         size: fileRecord.size,
         createdAt: fileRecord.createdAt,
       },
+      storageUsed: stats.storageUsed,
     });
   } catch (error: any) {
     console.error("UPLOAD CONTROLLER ERROR:", error);
@@ -168,7 +170,8 @@ export const deleteFile = async (req: Request, res: Response) => {
     });
     */
 
-    return res.json({ success: true, message: "File deleted successfully" });
+    const stats = await FileService.getStorageStats(req.user!.id);
+    return res.json({ success: true, message: "File deleted successfully", storageUsed: stats.storageUsed });
   } catch (error) {
     console.error("Delete error:", error);
     return res.status(500).json({ success: false, error: "Failed to delete file" });
