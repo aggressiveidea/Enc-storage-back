@@ -108,36 +108,35 @@ export const getFiles = async (req: Request, res: Response) => {
 
 export const downloadFile = async (req: Request, res: Response) => {
   try {
-    const fileRecord = await FileService.getFileById(String(req.params.id), req.user!.id);
-
+    console.log("=== DOWNLOAD DEBUG ===")
+    console.log("Requested ID:", req.params.id)
+    console.log("User ID:", req.user!.id)
+    
+    const fileRecord = await FileService.getFileById(String(req.params.id), req.user!.id)
+    console.log("File record found:", fileRecord ? "YES" : "NO")
+    
     if (!fileRecord) {
-      return res.status(404).json({ success: false, error: "File not found" });
+      console.log("File not found — either wrong ID or wrong owner")
+      return res.status(404).json({ success: false, error: "File not found" })
     }
 
-    if (!fs.existsSync(fileRecord.encryptedPath)) {
+    const resolvedPath = path.join(ENCRYPTED_DIR, fileRecord.filename)
+    console.log("Resolved path:", resolvedPath)
+    console.log("File exists on disk:", fs.existsSync(resolvedPath))
+
+    if (!fs.existsSync(resolvedPath)) {
       return res.status(404).json({ success: false, error: "Encrypted file not found on disk" });
     }
 
-    const encryptedBytes = fs.readFileSync(fileRecord.encryptedPath);
+    const encryptedBytes = fs.readFileSync(resolvedPath);
 
     res.setHeader("Content-Type", fileRecord.mimeType || "application/octet-stream");
     res.setHeader("Content-Disposition", `attachment; filename="${encodeURIComponent(fileRecord.originalName)}"`);
     res.setHeader("Content-Length", encryptedBytes.length.toString());
-    
-    // Send encryption metadata in custom headers
+    res.setHeader("Access-Control-Expose-Headers", "x-encrypted-key, x-iv, x-auth-tag");
     res.setHeader("x-encrypted-key", fileRecord.encryptedKey);
     res.setHeader("x-iv", fileRecord.iv);
     res.setHeader("x-auth-tag", fileRecord.authTag);
-
-    /*
-    await AuditService.log({
-      user: req.user!.id,
-      action: "DOWNLOAD",
-      resourceId: (fileRecord._id as any).toString(),
-      resourceName: fileRecord.originalName,
-      status: "SUCCESS"
-    });
-    */
 
     return res.end(encryptedBytes);
   } catch (error) {
@@ -155,20 +154,10 @@ export const deleteFile = async (req: Request, res: Response) => {
       return res.status(404).json({ success: false, error: "File not found or not owned by you" });
     }
 
-   
-    if (fs.existsSync(result.encryptedPath)) {
-      fs.unlinkSync(result.encryptedPath);
+    const resolvedPath = path.join(ENCRYPTED_DIR, result.filename);
+    if (fs.existsSync(resolvedPath)) {
+      fs.unlinkSync(resolvedPath);
     }
-
-    /*
-    await AuditService.log({
-      user: req.user!.id,
-      action: "DELETE",
-      resourceId: (result._id as any).toString(),
-      resourceName: result.originalName,
-      status: "SUCCESS"
-    });
-    */
 
     const stats = await FileService.getStorageStats(req.user!.id);
     return res.json({ success: true, message: "File deleted successfully", storageUsed: stats.storageUsed });
@@ -195,14 +184,16 @@ export const getGlobalFiles = async (req: Request, res: Response) => {
 
     return res.json({
       success: true,
-      files: files.map((f: any) => ({
-        id: f._id,
-        ownerId: f.ownerId,
-        originalName: f.originalName,
-        mimeType: f.mimeType,
-        size: f.size,
-        createdAt: f.createdAt,
-      })),
+     files: files.map((f: any) => ({
+     id: f._id.toString(),  
+     originalName: f.originalName,
+     mimeType: f.mimeType,
+     size: f.size,
+     createdAt: f.createdAt,
+     encryptedKey: f.encryptedKey,
+     iv: f.iv,
+     authTag: f.authTag,  
+   })),
       stats,
     });
   } catch (error) {

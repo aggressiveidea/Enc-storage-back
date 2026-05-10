@@ -12,12 +12,10 @@ export const upload = multer({
 const router = Router();
 
 router.use(authMiddleware.checkAuth);
-
 router.post("/upload", upload.single("file"), uploadFile);
-router.get("/global", authMiddleware.checkSuperAdmin, getGlobalFiles);
-router.get("/", getFiles);
-router.post("/download/:id", downloadFile); 
-router.delete("/:id", deleteFile);
 router.get("/stats", getStats);
-
+router.get("/global", authMiddleware.checkSuperAdmin, getGlobalFiles);
+router.get("/download/:id", downloadFile);  // ← Move ABOVE "/"
+router.get("/", getFiles);
+router.delete("/:id", deleteFile);
 export default router;

@@ -43,12 +43,12 @@ export class FileService {
 
 
   static async getFileById(fileId: string, userId: string) {
-    const file = await FileModel.findOne({
-      _id: new Types.ObjectId(fileId),
-      ownerId: new Types.ObjectId(userId),
-    }).lean();
-    return file;
-  }
+  const file = await FileModel.findOne({
+    _id: new Types.ObjectId(fileId), 
+    ownerId: new Types.ObjectId(userId),
+  }).lean()
+  return file
+}
 
   static async deleteFile(fileId: string, userId: string) {
     const file = await FileModel.findOneAndDelete({

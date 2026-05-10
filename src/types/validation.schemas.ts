@@ -9,6 +9,7 @@ export const RegisterSchema = z.object({
   lastName: z.string().min(1, "Last name is required").max(50, "Last name too long"),
   role: z.enum(["user", "admin", "super_admin"]).optional().default("user"),
   publicKey: z.string().min(1, "Public key is required"),
+  encryptedPrivateKey: z.string().min(1, "Encrypted private key is required"),
 })
 
 export const LoginSchema = z.object({
