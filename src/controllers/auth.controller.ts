@@ -14,22 +14,13 @@ export class AuthController {
       const data = await AuthService.Login(email, password)
 
       if (!data) {
-        const error = new ErrorResponseUtil().setError("invalid password or email")
-        console.log(error)
+        const error = new ErrorResponseUtil().setError("Invalid password or email")
         res.status(StatusCodes.UNAUTHORIZED).json(error)
         return
       }
 
-      /*
-      await AuditService.log({
-        user: (data.user as any).id || (data as any).id,
-        action: "LOGIN",
-        status: "SUCCESS"
-      })
-      */
-
       const success = new SuccessResponseUtil({
-        message: "Login successful",
+        message: "Login initiated",
         data: data,
       })
 
@@ -44,7 +35,7 @@ export class AuthController {
     try {
       const userData = req.body
 
-      const newUser = await AuthService.RegisterUser(
+      const result = await AuthService.RegisterUser(
         userData.email,
         userData.password,
         userData.firstName,
@@ -54,29 +45,20 @@ export class AuthController {
         userData.encryptedPrivateKey,
       )
 
-      if (!newUser) {
+      if (!result) {
         const error = new ErrorResponseUtil().setError("A user with this email already exists")
         res.status(StatusCodes.CONFLICT).json(error)
         return
       }
 
-      /*
-      await AuditService.log({
-        user: (newUser as any)._id,
-        action: "REGISTER",
-        status: "SUCCESS"
-      })
-      */
-
       const success = new SuccessResponseUtil({
-        message: "Registration successful",
-        data: newUser,
+        message: result.message,
+        data: { email: result.email },
       })
 
       res.status(StatusCodes.CREATED).json(success)
     } catch (error: any) {
       console.error("Registration error:", error)
-      // extracting Mongoose validation error message psq ugh
       const msg = error.name === 'ValidationError' ? Object.values(error.errors).map((e: any) => e.message).join(', ') : (error.message || "Database connection error")
       const errorResponse = new ErrorResponseUtil().setError(msg)
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
@@ -105,7 +87,7 @@ export class AuthController {
       const token = req.params.token as string;
 
       const result = await AuthService.ResetPassword(token, password);
-      
+
       if (!result.success) {
         const error = new ErrorResponseUtil().setError(result.message);
         res.status(StatusCodes.BAD_REQUEST).json(error);
@@ -120,6 +102,96 @@ export class AuthController {
     } catch (error) {
       console.error("Reset password error:", error);
       const errorResponse = new ErrorResponseUtil().setError("Failed to reset password");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+
+  static async VerifyOTP(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, otp, tempToken } = req.body;
+
+      const result = await AuthService.VerifyOTP(email, otp, tempToken);
+
+      if (!result.success) {
+        const error = new ErrorResponseUtil().setError(result.message || "OTP verification failed");
+        res.status(StatusCodes.BAD_REQUEST).json(error);
+        return;
+      }
+
+      const response = new SuccessResponseUtil({
+        message: "OTP verified successfully",
+        data: result.data!,
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Verify OTP error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to verify OTP");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+
+  static async ResendOTP(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, tempToken } = req.body;
+
+      const result = await AuthService.ResendOTP(email, tempToken);
+
+      if (!result.success) {
+        const error = new ErrorResponseUtil().setError(result.message);
+        res.status(StatusCodes.BAD_REQUEST).json(error);
+        return;
+      }
+
+      const response = new SuccessResponseUtil({
+        message: result.message,
+        data: { tempToken: result.tempToken },
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Resend OTP error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to resend OTP");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+
+  static async VerifyEmail(req: Request, res: Response, next: NextFunction) {
+    try {
+      const token = req.params.token as string;
+
+      const result = await AuthService.VerifyEmail(token);
+
+      if (!result.success) {
+        const error = new ErrorResponseUtil().setError(result.message);
+        res.status(StatusCodes.BAD_REQUEST).json(error);
+        return;
+      }
+
+      const response = new SuccessResponseUtil({
+        message: result.message,
+        data: null,
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Verify email error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to verify email");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+
+  static async ResendVerification(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email } = req.body;
+
+      const result = await AuthService.ResendVerificationEmail(email);
+
+      const response = new SuccessResponseUtil({
+        message: result.message,
+        data: null,
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Resend verification error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to resend verification");
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
     }
   }

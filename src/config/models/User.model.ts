@@ -52,6 +52,22 @@ export const UserSchema = new Schema<User>(
     resetPasswordExpires: {
       type: Date,
     },
+    otpCode: {
+      type: String,
+    },
+    otpExpires: {
+      type: Date,
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationToken: {
+      type: String,
+    },
+    emailVerificationExpires: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

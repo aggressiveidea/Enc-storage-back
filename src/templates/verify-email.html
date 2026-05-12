@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #F8F1E7;
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    }
+    .container {
+      max-width: 500px;
+      width: 100%;
+      background: #FFFFFF;
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(45, 36, 32, 0.08);
+      overflow: hidden;
+    }
+    .header {
+      background: #2D2420;
+      padding: 32px 28px;
+      text-align: center;
+    }
+    .header .brand {
+      font-family: 'Georgia', 'Playfair Display', serif;
+      font-size: 1.6rem;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+    .header .subtitle {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+    .body {
+      padding: 32px 28px;
+      text-align: center;
+    }
+    .body .icon {
+      margin-bottom: 20px;
+    }
+    .body h2 {
+      font-family: 'Georgia', 'Playfair Display', serif;
+      color: #2D2420;
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+    }
+    .body p {
+      color: #8C7E74;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .verify-button {
+      display: inline-block;
+      background: #2D2420;
+      color: #FFFFFF;
+      padding: 14px 36px;
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 24px;
+      transition: background 0.2s ease;
+    }
+    .verify-button:hover {
+      background: #5D4037;
+    }
+    .expiry {
+      font-size: 0.8rem;
+      color: #A67C52;
+      background: rgba(166, 124, 82, 0.08);
+      padding: 10px 18px;
+      border-radius: 8px;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+    .link-fallback {
+      font-size: 0.82rem;
+      color: #8C7E74;
+      word-break: break-all;
+      margin-top: 8px;
+    }
+    .footer {
+      padding: 20px 28px;
+      text-align: center;
+      border-top: 1px solid rgba(112, 66, 50, 0.08);
+      font-size: 0.78rem;
+      color: #8C7E74;
+      line-height: 1.5;
+    }
+    .footer .brand-name {
+      font-weight: 600;
+      color: #704232;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">CipherCloud</div>
+      <div class="subtitle">Encrypted Mini Cloud</div>
+    </div>
+    <div class="body">
+      <div class="icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#704232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <h2>Verify Your Email Address</h2>
+      <p>Thank you for creating a CipherCloud account. Click the button below to verify your email and activate your secure vault.</p>
+
+      <a href="{{ verification_link }}" class="verify-button">Verify Email</a>
+
+      <div class="expiry">
+        This link expires in <strong>{{ expiryHours }}</strong> hours
+      </div>
+
+      <p>If the button above doesn't work, copy and paste this link into your browser:</p>
+      <p class="link-fallback">{{ verification_link }}</p>
+    </div>
+    <div class="footer">
+      If you did not create this account, please ignore this email.<br>
+      &copy; {{year}} <span class="brand-name">CipherCloud</span>. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your One-Time Password</title>
+  <style>
+    * {
+      padding: 0;
+      margin: 0;
+      box-sizing: border-box;
+    }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #F8F1E7;
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    }
+    .container {
+      max-width: 500px;
+      width: 100%;
+      background: #FFFFFF;
+      border-radius: 16px;
+      box-shadow: 0 12px 40px rgba(45, 36, 32, 0.08);
+      overflow: hidden;
+    }
+    .header {
+      background: #2D2420;
+      padding: 32px 28px;
+      text-align: center;
+    }
+    .header .brand {
+      font-family: 'Georgia', 'Playfair Display', serif;
+      font-size: 1.6rem;
+      color: #FFFFFF;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+    .header .subtitle {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.65);
+    }
+    .body {
+      padding: 32px 28px;
+      text-align: center;
+    }
+    .body .icon {
+      margin-bottom: 20px;
+    }
+    .body h2 {
+      font-family: 'Georgia', 'Playfair Display', serif;
+      color: #2D2420;
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+    }
+    .body p {
+      color: #8C7E74;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .otp-box {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .otp-digit {
+      width: 48px;
+      height: 56px;
+      background: #F8F1E7;
+      border: 2px solid #704232;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #2D2420;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 0.05em;
+    }
+    .expiry {
+      font-size: 0.8rem;
+      color: #A67C52;
+      background: rgba(166, 124, 82, 0.08);
+      padding: 10px 18px;
+      border-radius: 8px;
+      display: inline-block;
+      margin-bottom: 24px;
+    }
+    .expiry strong {
+      color: #704232;
+    }
+    .footer {
+      padding: 20px 28px;
+      text-align: center;
+      border-top: 1px solid rgba(112, 66, 50, 0.08);
+      font-size: 0.78rem;
+      color: #8C7E74;
+      line-height: 1.5;
+    }
+    .footer .brand-name {
+      font-weight: 600;
+      color: #704232;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="brand">CipherCloud</div>
+      <div class="subtitle">Encrypted Mini Cloud</div>
+    </div>
+    <div class="body">
+      <div class="icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#704232" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          <circle cx="12" cy="16" r="1"></circle>
+        </svg>
+      </div>
+      <h2>Secure Login Code</h2>
+      <p>Enter the one-time password below to complete your login to CipherCloud. This code is valid for a single use only.</p>
+
+      <div class="otp-box">
+        {{#each otpDigits}}
+        <div class="otp-digit">{{this}}</div>
+        {{/each}}
+      </div>
+
+      <div class="expiry">
+        This code expires in <strong>{{expiryMinutes}}</strong> minutes
+      </div>
+    </div>
+    <div class="footer">
+      If you did not attempt to sign in, please ignore this email.<br>
+      &copy; {{year}} <span class="brand-name">CipherCloud</span>. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

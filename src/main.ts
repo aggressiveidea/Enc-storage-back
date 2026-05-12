@@ -25,18 +25,14 @@ connect().catch((error) => {
   console.error("Failed to connect to database:", error.message);
   process.exit(1);
 });
-const FRONT_URL = process.env.FRONT_URL;
-
-if (!FRONT_URL) {
-  throw new Error("FRONT_URL is missing in .env");
-}
+const allowAllOrigins = true;
 
 app.use(helmet()); 
 app.use(express.json({ limit: "10mb" })); 
 app.use(morgan("dev"));
 app.use(
   cors({
-    origin: [FRONT_URL],
+    origin: allowAllOrigins ? true : undefined,
     methods: "GET,POST,PUT,DELETE,PATCH",
     allowedHeaders: "Content-Type,Authorization",
     exposedHeaders: "x-iv,x-auth-tag,x-encrypted-key",

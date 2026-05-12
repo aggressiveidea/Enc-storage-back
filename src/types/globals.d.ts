@@ -11,6 +11,11 @@ export declare interface User {
   encryptedPrivateKey: string
   resetPasswordToken?: string
   resetPasswordExpires?: Date
+  otpCode?: string
+  otpExpires?: Date
+  isEmailVerified: boolean
+  emailVerificationToken?: string
+  emailVerificationExpires?: Date
   storageQuota: number
   storageUsed: number
   createdAt?: Date

@@ -31,3 +31,18 @@ export const ResetPasswordSchema = z.object({
     .min(8, "password must be at least 8 characters")
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain uppercase, lowercase, and number"),
 })
+
+export const VerifyOTPSchema = z.object({
+  email: z.string().email("invalid email format"),
+  otp: z.string().length(6, "OTP must be 6 digits"),
+  tempToken: z.string().min(1, "temp token is required"),
+})
+
+export const ResendOTPSchema = z.object({
+  email: z.string().email("invalid email format"),
+  tempToken: z.string().min(1, "temp token is required"),
+})
+
+export const ResendVerificationSchema = z.object({
+  email: z.string().email("invalid email format"),
+})

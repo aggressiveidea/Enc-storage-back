@@ -139,12 +139,12 @@ export class EmailService {
     try {
       const templatePath = path.join(process.cwd(), "src/templates/index.html");
       const templateSource = await fs.readFile(templatePath, "utf-8");
-      
+
       const template = Handlebars.compile(templateSource);
       const html = template({ reset_link: resetLink });
 
       await this.sendEmail({
-        from: `"Cipher Cloud" <${process.env.EMAIL_USER}>`,
+        from: `"CipherCloud" <${process.env.EMAIL_USER}>`,
         to,
         subject: "Password Reset Request",
         html,
@@ -154,6 +154,69 @@ export class EmailService {
       return true;
     } catch (error) {
       console.error("Error sending password reset email:", error);
+      return false;
+    }
+  }
+
+  static async sendVerificationEmail(
+    to: string,
+    verificationLink: string,
+    expiryHours: number = 24
+  ): Promise<boolean> {
+    try {
+      const templatePath = path.join(process.cwd(), "src/templates/verify-email.html");
+      const templateSource = await fs.readFile(templatePath, "utf-8");
+
+      const template = Handlebars.compile(templateSource);
+      const html = template({
+        verification_link: verificationLink,
+        expiryHours,
+        year: new Date().getFullYear(),
+      });
+
+      await this.sendEmail({
+        from: `"CipherCloud" <${process.env.EMAIL_USER}>`,
+        to,
+        subject: "Verify your CipherCloud email address",
+        html,
+      });
+
+      console.log(`Verification email sent to ${to}`);
+      return true;
+    } catch (error) {
+      console.error("Error sending verification email:", error);
+      return false;
+    }
+  }
+
+  static async sendOTPEmail(
+    to: string,
+    otpCode: string,
+    expiryMinutes: number = 5
+  ): Promise<boolean> {
+    try {
+      const templatePath = path.join(process.cwd(), "src/templates/otp.html");
+      const templateSource = await fs.readFile(templatePath, "utf-8");
+
+      const otpDigits = otpCode.split("");
+      const template = Handlebars.compile(templateSource);
+      const html = template({
+        otpDigits,
+        expiryMinutes,
+        year: new Date().getFullYear(),
+      });
+
+      await this.sendEmail({
+        from: `"CipherCloud" <${process.env.EMAIL_USER}>`,
+        to,
+        subject: `${otpCode} is your CipherCloud login code`,
+        html,
+      });
+
+      console.log(`OTP email sent to ${to}`);
+      return true;
+    } catch (error) {
+      console.error("Error sending OTP email:", error);
       return false;
     }
   }
