@@ -267,4 +267,102 @@ export class AuthController {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
     }
   }
+
+  /* ── TOTP / MFA ──────────────────────────────────── */
+
+  static async GenerateTOTPSetup(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { tempToken } = req.body;
+
+      const result = await AuthService.GenerateTOTPSetup(tempToken);
+
+      if (!result.success) {
+        const error = new ErrorResponseUtil().setError(result.message || "Failed to generate TOTP setup");
+        res.status(StatusCodes.BAD_REQUEST).json(error);
+        return;
+      }
+
+      const response = new SuccessResponseUtil({
+        message: "TOTP setup data generated.",
+        data: result.data!,
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Generate TOTP setup error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to generate TOTP setup");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+
+  static async VerifyTOTPSetup(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { tempToken, totpCode } = req.body;
+
+      const result = await AuthService.VerifyTOTPSetup(tempToken, totpCode);
+
+      if (!result.success) {
+        const error = new ErrorResponseUtil().setError(result.message || "TOTP verification failed");
+        res.status(StatusCodes.BAD_REQUEST).json(error);
+        return;
+      }
+
+      const response = new SuccessResponseUtil({
+        message: result.message,
+        data: result.data || null,
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Verify TOTP setup error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to verify TOTP setup");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+
+  static async VerifyTOTPLogin(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, tempToken, totpCode } = req.body;
+
+      const result = await AuthService.VerifyTOTPLogin(email, tempToken, totpCode);
+
+      if (!result.success) {
+        const error = new ErrorResponseUtil().setError(result.message || "TOTP verification failed");
+        res.status(StatusCodes.BAD_REQUEST).json(error);
+        return;
+      }
+
+      const response = new SuccessResponseUtil({
+        message: "TOTP verified successfully.",
+        data: result.data!,
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Verify TOTP login error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to verify TOTP");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+
+  static async GetTOTPStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = req.user!;
+
+      const result = await AuthService.GetTOTPStatus(user.id);
+
+      if (!result.success) {
+        const error = new ErrorResponseUtil().setError(result.message || "Failed to get TOTP status");
+        res.status(StatusCodes.BAD_REQUEST).json(error);
+        return;
+      }
+
+      const response = new SuccessResponseUtil({
+        message: "TOTP status retrieved.",
+        data: result.data!,
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Get TOTP status error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to get TOTP status");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
 }

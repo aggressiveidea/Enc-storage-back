@@ -6,6 +6,8 @@ import crypto from "crypto"
 import fs from "fs"
 import path from "path"
 import { EmailService } from "./email.service"
+import { generateSecret, verify } from "otplib"
+import QRCode from "qrcode"
 
 export class AuthService {
   static async Login(email: string, password: string) {
@@ -26,30 +28,20 @@ export class AuthService {
       }
     }
 
-    const otpCode = crypto.randomInt(100000, 999999).toString()
-    const otpExpires = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
+    const tempToken = await JwtUtil.createTempToken(user.id, "otp")
 
-    await userModel.findByIdAndUpdate(user.id, {
-      otpCode,
-      otpExpires,
-    })
-
-    const emailSent = await EmailService.sendOTPEmail(user.email, otpCode)
-
-    if (!emailSent) {
-      console.error(`Failed to send OTP email to ${user.email}`)
+    // First login after email verification — force MFA setup
+    if (!user.mfaSetupComplete) {
       return {
-        requiresOTP: true,
-        tempToken: null,
+        requiresMFASetup: true,
+        tempToken,
         email: user.email,
-        emailWarning: "We couldn't send the OTP email. You can use a backup code, or try again in a moment.",
       }
     }
 
-    const tempToken = await JwtUtil.createTempToken(user.id, "otp")
-
+    // MFA is set up — let user choose method (no OTP sent automatically)
     return {
-      requiresOTP: true,
+      requiresMFA: true,
       tempToken,
       email: user.email,
     }
@@ -448,6 +440,157 @@ export class AuthService {
         totalCodes: total,
         consumedCodes: consumed,
         remainingCodes: remaining,
+      },
+    }
+  }
+
+  /* ── TOTP / MFA ───────────────────────────────────── */
+
+  static async GenerateTOTPSetup(tempToken: string) {
+    const tempPayload = await JwtUtil.verifyTempToken(tempToken, "otp")
+    if (!tempPayload) {
+      return { success: false, message: "Invalid or expired session. Please log in again." }
+    }
+
+    const userId = (tempPayload as any).id
+    const user = await userModel.findById(userId)
+    if (!user) {
+      return { success: false, message: "User not found." }
+    }
+
+    // Generate a new TOTP secret
+    const secret = generateSecret()
+    const appName = "CipherCloud"
+    const otpauthUrl = `otpauth://totp/${encodeURIComponent(appName)}:${encodeURIComponent(user.email)}?secret=${secret}&issuer=${encodeURIComponent(appName)}`
+
+    // Generate QR code as data URL
+    const qrDataUrl = await QRCode.toDataURL(otpauthUrl, {
+      width: 256,
+      margin: 2,
+      color: { dark: "#2D2420", light: "#F8F1E7" },
+    })
+
+    // Store secret temporarily (will be confirmed during verify-setup)
+    // We store it now so verify-setup can validate the code
+    await userModel.findByIdAndUpdate(userId, {
+      totpSecret: secret,
+      totpEnabled: false,
+    })
+
+    return {
+      success: true,
+      data: {
+        secret,
+        otpauthUrl,
+        qrDataUrl,
+      },
+    }
+  }
+
+  static async VerifyTOTPSetup(tempToken: string, totpCode: string) {
+    const tempPayload = await JwtUtil.verifyTempToken(tempToken, "otp")
+    if (!tempPayload) {
+      return { success: false, message: "Invalid or expired session. Please log in again." }
+    }
+
+    const userId = (tempPayload as any).id
+    const user = await userModel.findById(userId)
+    if (!user) {
+      return { success: false, message: "User not found." }
+    }
+
+    if (!user.totpSecret) {
+      return { success: false, message: "TOTP setup has not been initiated. Please start again." }
+    }
+
+    const isValid = verify({ token: totpCode, secret: user.totpSecret })
+    if (!isValid) {
+      return { success: false, message: "Invalid TOTP code. Please try again." }
+    }
+
+    // Enable TOTP and mark MFA setup as complete
+    await userModel.findByIdAndUpdate(userId, {
+      totpEnabled: true,
+      mfaSetupComplete: true,
+    })
+
+    // Issue a JWT so the user can save backup codes
+    const authToken = await JwtUtil.createToken(userId)
+
+    return {
+      success: true,
+      message: "TOTP has been enabled successfully. Make sure to save your backup codes.",
+      data: {
+        token: authToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          publicKey: user.publicKey,
+          encryptedPrivateKey: user.encryptedPrivateKey,
+          storageUsed: user.storageUsed,
+          storageQuota: user.storageQuota,
+        },
+      },
+    }
+  }
+
+  static async VerifyTOTPLogin(email: string, tempToken: string, totpCode: string) {
+    const tempPayload = await JwtUtil.verifyTempToken(tempToken, "otp")
+    if (!tempPayload) {
+      return { success: false, message: "Invalid or expired session. Please log in again." }
+    }
+
+    const user = await userModel.findOne({ email })
+    if (!user) {
+      return { success: false, message: "User not found." }
+    }
+
+    if (user.id.toString() !== (tempPayload as any).id) {
+      return { success: false, message: "Token mismatch. Please log in again." }
+    }
+
+    if (!user.totpSecret || !user.totpEnabled) {
+      return { success: false, message: "TOTP is not set up for this account." }
+    }
+
+    const isValid = verify({ token: totpCode, secret: user.totpSecret })
+    if (!isValid) {
+      return { success: false, message: "Invalid TOTP code. Please try again." }
+    }
+
+    const authToken = await JwtUtil.createToken(user.id)
+    return {
+      success: true,
+      data: {
+        token: authToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          publicKey: user.publicKey,
+          encryptedPrivateKey: user.encryptedPrivateKey,
+          storageUsed: user.storageUsed,
+          storageQuota: user.storageQuota,
+        },
+      },
+    }
+  }
+
+  static async GetTOTPStatus(userId: string) {
+    const user = await userModel.findById(userId).select("totpEnabled mfaSetupComplete")
+    if (!user) {
+      return { success: false, message: "User not found." }
+    }
+    return {
+      success: true,
+      data: {
+        totpEnabled: user.totpEnabled,
+        mfaSetupComplete: user.mfaSetupComplete,
       },
     }
   }

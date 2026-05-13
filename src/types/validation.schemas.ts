@@ -48,3 +48,14 @@ export const ResendOTPSchema = z.object({
 export const ResendVerificationSchema = z.object({
   email: z.string().email("invalid email format"),
 })
+
+export const VerifyTOTPSetupSchema = z.object({
+  tempToken: z.string().min(1, "temp token is required"),
+  totpCode: z.string().length(6, "TOTP code must be 6 digits"),
+})
+
+export const VerifyTOTPLoginSchema = z.object({
+  email: z.string().email("invalid email format"),
+  tempToken: z.string().min(1, "temp token is required"),
+  totpCode: z.string().length(6, "TOTP code must be 6 digits"),
+})

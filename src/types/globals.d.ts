@@ -20,6 +20,9 @@ export declare interface User {
   encryptedBackupCodes?: string
   backupCodesIV?: string
   backupCodesSalt?: string
+  totpSecret?: string
+  totpEnabled: boolean
+  mfaSetupComplete: boolean
   storageQuota: number
   storageUsed: number
   createdAt?: Date

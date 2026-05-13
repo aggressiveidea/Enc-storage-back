@@ -87,6 +87,17 @@ export const UserSchema = new Schema<User>(
     backupCodesSalt: {
       type: String,
     },
+    totpSecret: {
+      type: String,
+    },
+    totpEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    mfaSetupComplete: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

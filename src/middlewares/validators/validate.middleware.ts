@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express"
 import type { ZodSchema, ZodIssue } from "zod"
 import { StatusCodes } from "http-status-codes"
 import { ErrorResponseUtil } from "../../utils/Responses.util"
-import { RegisterSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema, VerifyOTPSchema, ResendOTPSchema, ResendVerificationSchema } from "../../types/validation.schemas"
+import { RegisterSchema, LoginSchema, ForgotPasswordSchema, ResetPasswordSchema, VerifyOTPSchema, ResendOTPSchema, ResendVerificationSchema, VerifyTOTPSetupSchema, VerifyTOTPLoginSchema } from "../../types/validation.schemas"
 
 export const validate = (schema: ZodSchema<any>) => {
   return (req: Request, res: Response, next: NextFunction) => {
@@ -41,3 +41,5 @@ export const validateResetPassword = validate(ResetPasswordSchema)
 export const validateVerifyOTP = validate(VerifyOTPSchema)
 export const validateResendOTP = validate(ResendOTPSchema)
 export const validateResendVerification = validate(ResendVerificationSchema)
+export const validateVerifyTOTPSetup = validate(VerifyTOTPSetupSchema)
+export const validateVerifyTOTPLogin = validate(VerifyTOTPLoginSchema)
