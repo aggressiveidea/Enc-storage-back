@@ -68,6 +68,25 @@ export const UserSchema = new Schema<User>(
     emailVerificationExpires: {
       type: Date,
     },
+    backupCodes: {
+      type: [
+        {
+          hash: { type: String },
+          consumed: { type: Boolean, default: false },
+          consumedAt: { type: Date },
+        },
+      ],
+      default: [],
+    },
+    encryptedBackupCodes: {
+      type: String,
+    },
+    backupCodesIV: {
+      type: String,
+    },
+    backupCodesSalt: {
+      type: String,
+    },
   },
   {
     timestamps: true,

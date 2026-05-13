@@ -325,4 +325,106 @@ export class AuthService {
 
     return { success: true, message: "A new verification link has been sent to your email." }
   }
+
+  static async SaveBackupCodes(
+    userId: string,
+    hashedCodes: string[],
+    encryptedBlob: string,
+    iv: string,
+    salt: string,
+  ) {
+    const backupCodes = hashedCodes.map((hash) => ({
+      hash,
+      consumed: false,
+    }))
+
+    await userModel.findByIdAndUpdate(userId, {
+      backupCodes,
+      encryptedBackupCodes: encryptedBlob,
+      backupCodesIV: iv,
+      backupCodesSalt: salt,
+    })
+
+    return { success: true, message: "Backup codes saved successfully.", totalCodes: hashedCodes.length }
+  }
+
+  static async VerifyBackupCode(email: string, codeHash: string, tempToken: string) {
+    const tempPayload = await JwtUtil.verifyTempToken(tempToken, "otp")
+    if (!tempPayload) {
+      return { success: false, message: "Invalid or expired session. Please log in again." }
+    }
+
+    const user = await userModel.findOne({ email })
+    if (!user) {
+      return { success: false, message: "User not found." }
+    }
+
+    if (user.id.toString() !== (tempPayload as any).id) {
+      return { success: false, message: "Token mismatch. Please log in again." }
+    }
+
+    if (!user.backupCodes || user.backupCodes.length === 0) {
+      return { success: false, message: "No backup codes have been configured." }
+    }
+
+    const codeIndex = user.backupCodes.findIndex(
+      (bc) => bc.hash === codeHash && !bc.consumed,
+    )
+
+    if (codeIndex === -1) {
+      return { success: false, message: "Invalid or already used backup code." }
+    }
+
+    user.backupCodes[codeIndex].consumed = true
+    user.backupCodes[codeIndex].consumedAt = new Date()
+    await user.save()
+
+    const remaining = user.backupCodes.filter((bc) => !bc.consumed).length
+
+    const authToken = await JwtUtil.createToken(user.id)
+    return {
+      success: true,
+      data: {
+        token: authToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          publicKey: user.publicKey,
+          encryptedPrivateKey: user.encryptedPrivateKey,
+          storageUsed: user.storageUsed,
+          storageQuota: user.storageQuota,
+        },
+        remainingBackupCodes: remaining,
+      },
+    }
+  }
+
+  static async GetBackupCodesData(userId: string) {
+    const user = await userModel.findById(userId).select(
+      "encryptedBackupCodes backupCodesIV backupCodesSalt backupCodes",
+    )
+
+    if (!user) {
+      return { success: false, message: "User not found." }
+    }
+
+    const total = user.backupCodes?.length || 0
+    const consumed = user.backupCodes?.filter((bc) => bc.consumed).length || 0
+    const remaining = total - consumed
+
+    return {
+      success: true,
+      data: {
+        encryptedBackupCodes: user.encryptedBackupCodes || null,
+        backupCodesIV: user.backupCodesIV || null,
+        backupCodesSalt: user.backupCodesSalt || null,
+        totalCodes: total,
+        consumedCodes: consumed,
+        remainingCodes: remaining,
+      },
+    }
+  }
 }

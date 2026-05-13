@@ -200,4 +200,71 @@ export class AuthController {
       res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
     }
   }
+
+  static async SaveBackupCodes(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = req.user!;
+      const { hashedCodes, encryptedBlob, iv, salt } = req.body;
+
+      const result = await AuthService.SaveBackupCodes(user.id, hashedCodes, encryptedBlob, iv, salt);
+
+      const response = new SuccessResponseUtil({
+        message: result.message,
+        data: { totalCodes: result.totalCodes },
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Save backup codes error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to save backup codes");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+
+  static async VerifyBackupCode(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { email, codeHash, tempToken } = req.body;
+
+      const result = await AuthService.VerifyBackupCode(email, codeHash, tempToken);
+
+      if (!result.success) {
+        const error = new ErrorResponseUtil().setError(result.message || "Backup code verification failed");
+        res.status(StatusCodes.BAD_REQUEST).json(error);
+        return;
+      }
+
+      const response = new SuccessResponseUtil({
+        message: `Backup code accepted. ${result.data!.remainingBackupCodes} codes remaining.`,
+        data: result.data!,
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Verify backup code error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to verify backup code");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
+
+  static async GetBackupCodes(req: Request, res: Response, next: NextFunction) {
+    try {
+      const user = req.user!;
+
+      const result = await AuthService.GetBackupCodesData(user.id);
+
+      if (!result.success) {
+        const error = new ErrorResponseUtil().setError(result.message || "Failed to get backup codes");
+        res.status(StatusCodes.BAD_REQUEST).json(error);
+        return;
+      }
+
+      const response = new SuccessResponseUtil({
+        message: "Backup codes data retrieved",
+        data: result.data!,
+      });
+      res.status(StatusCodes.OK).json(response);
+    } catch (error: any) {
+      console.error("Get backup codes error:", error);
+      const errorResponse = new ErrorResponseUtil().setError(error.message || "Failed to get backup codes");
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
+    }
+  }
 }

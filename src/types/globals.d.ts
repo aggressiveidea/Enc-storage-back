@@ -16,6 +16,10 @@ export declare interface User {
   isEmailVerified: boolean
   emailVerificationToken?: string
   emailVerificationExpires?: Date
+  backupCodes: Array<{ hash: string; consumed: boolean; consumedAt?: Date }>
+  encryptedBackupCodes?: string
+  backupCodesIV?: string
+  backupCodesSalt?: string
   storageQuota: number
   storageUsed: number
   createdAt?: Date
