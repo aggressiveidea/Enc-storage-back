@@ -83,10 +83,15 @@ export class AuthController {
 
   static async ResetPassword(req: Request, res: Response, next: NextFunction) {
     try {
-      const { password } = req.body;
+      const { password, publicKey, encryptedPrivateKey } = req.body;
       const token = req.params.token as string;
 
-      const result = await AuthService.ResetPassword(token, password);
+      const result = await AuthService.ResetPassword(
+        token,
+        password,
+        publicKey,
+        encryptedPrivateKey,
+      );
 
       if (!result.success) {
         const error = new ErrorResponseUtil().setError(result.message);
@@ -96,7 +101,7 @@ export class AuthController {
 
       const response = new SuccessResponseUtil({
         message: result.message,
-        data: null
+        data: { filesDeleted: result.filesDeleted },
       });
       res.status(StatusCodes.OK).json(response);
     } catch (error) {

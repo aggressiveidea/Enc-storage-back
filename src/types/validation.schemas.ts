@@ -30,6 +30,8 @@ export const ResetPasswordSchema = z.object({
     .string()
     .min(8, "password must be at least 8 characters")
     .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, "Password must contain uppercase, lowercase, and number"),
+  publicKey: z.string().min(1, "Public key is required for key rotation"),
+  encryptedPrivateKey: z.string().min(1, "Encrypted private key is required for key rotation"),
 })
 
 export const VerifyOTPSchema = z.object({

@@ -1,7 +1,10 @@
 import { userModel } from "../config/models/User.model"
+import { FileModel } from "../config/models/File.model"
 import { bcryptUtil } from "../utils/bcrypt.utils"
 import { JwtUtil } from "../utils/jwt.utils"
 import crypto from "crypto"
+import fs from "fs"
+import path from "path"
 import { EmailService } from "./email.service"
 
 export class AuthService {
@@ -201,7 +204,12 @@ export class AuthService {
     }
   }
 
-  static async ResetPassword(token: string, newPassword: string) {
+  static async ResetPassword(
+    token: string,
+    newPassword: string,
+    newPublicKey: string,
+    newEncryptedPrivateKey: string,
+  ) {
     const user = await userModel.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: new Date() },
@@ -211,15 +219,47 @@ export class AuthService {
       return { success: false, message: "Invalid or expired reset token" }
     }
 
+    const ENCRYPTED_DIR = path.join(process.cwd(), "public", "encrypted")
+
+    // ── Wipe all user files from disk ──
+    const userFiles = await FileModel.find({ ownerId: user._id })
+    let deletedCount = 0
+    for (const file of userFiles) {
+      const filePath = path.join(ENCRYPTED_DIR, file.filename)
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath)
+        }
+      } catch (err) {
+        console.error(`Failed to delete file ${file.filename} from disk:`, err)
+      }
+      deletedCount++
+    }
+
+    // ── Delete all file records from DB ──
+    await FileModel.deleteMany({ ownerId: user._id })
+
+    // ── Update user with new password, new keys, reset storage ──
     const hashedPassword = await bcryptUtil.hash(newPassword)
 
     await userModel.findByIdAndUpdate(user.id, {
       password: hashedPassword,
+      publicKey: newPublicKey,
+      encryptedPrivateKey: newEncryptedPrivateKey,
+      storageUsed: 0,
       resetPasswordToken: undefined,
       resetPasswordExpires: undefined,
     })
 
-    return { success: true, message: "Password has been reset successfully" }
+    console.log(
+      `Password reset for ${user.email}: deleted ${deletedCount} files, rotated keys, storage reset`,
+    )
+
+    return {
+      success: true,
+      message: "Password has been reset successfully. All encrypted files have been purged and new encryption keys have been provisioned.",
+      filesDeleted: deletedCount,
+    }
   }
 
   static async ValidateResetToken(token: string) {
