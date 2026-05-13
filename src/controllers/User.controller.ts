@@ -1,121 +1,137 @@
-import { UserService } from "../services/Users.service";
-import { ErrorResponseUtil, SuccessResponseUtil } from "../utils/Responses.util";
-import { StatusCodes } from "http-status-codes";
-import {Request, Response, NextFunction} from 'express'
-    interface UserParams {
-  id: string
-}
-export class UserController{
+import { UserService } from "../services/Users.service"
+import { ErrorResponseUtil, SuccessResponseUtil } from "../utils/Responses.util"
+import { StatusCodes } from "http-status-codes"
+import type { Request, Response, NextFunction } from "express"
 
-    static async getAllUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
-        try {
-          const users = await UserService.getAllUsers()
-          if (!users || users.length === 0) {
-            const errorResponse = new ErrorResponseUtil().setError("no users found")
-            res.status(StatusCodes.NOT_FOUND).json(errorResponse)
-            return
-          }
-          const successResponse = new SuccessResponseUtil({
-            message: "users fetched successfully",
-            data: users,
-          })
-          res.status(StatusCodes.OK).json(successResponse)
-        } catch (error) {
-          console.error("Error fetching users:", error)
-          const errorResponse = new ErrorResponseUtil().setError("Failed to fetch users")
-          res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
-        }
+export class UserController {
+  static async getAllUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const users = await UserService.getAllUsers()
+      if (!users || users.length === 0) {
+        const response = new SuccessResponseUtil({
+          message: "No users found in the system yet.",
+          data: [],
+        })
+        res.status(StatusCodes.OK).json(response)
+        return
       }
-    
-      static async getUserByID(req: Request, res: Response, next: NextFunction): Promise<void> {
-        const userID: string = req.params.id as string
-        try {
-          const user = await UserService.getUserByID(userID)
-          if (!user) {
-            const errorResponse = new ErrorResponseUtil().setError("user not found")
-            res.status(StatusCodes.NOT_FOUND).json(errorResponse)
-            return
-          }
-          const successResponse = new SuccessResponseUtil({
-            message: "user fetched successfully",
-            data: user,
-          })
-          res.status(StatusCodes.OK).json(successResponse)
-        } catch (error) {
-          console.log("error fetching user ")
-          const errorResponse = new ErrorResponseUtil().setError("Failed to fetch user")
-          res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
-        }
-      }
-      static async updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
-        const userID: string = req.params.id as string
-        const userData = req.body
-        try {
-          const updateUser = await UserService.UpdateUser(userID, userData)
-          if (!updateUser) {
-            const errorResponse = new ErrorResponseUtil().setError("user not found")
-            res.status(StatusCodes.NOT_FOUND).json(errorResponse)
-            return
-          }
-          const successResponse = new SuccessResponseUtil({
-            message: "user updated successfully",
-            data: updateUser,
-          })
-          res.status(StatusCodes.OK).json(successResponse)
-        } catch (error) {
-          console.error("Error updating user:", error)
-          const errorResponse = new ErrorResponseUtil().setError("Failed to update user")
-          res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
-        }
-      }
-    
-      static async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
-        const userID: string = req.params.id as string
-        try {
-          const deletedUser = await UserService.DeleteUser(userID)
-          if (!deletedUser) {
-            const errorResponse = new ErrorResponseUtil().setError("user not found")
-            res.status(StatusCodes.NOT_FOUND).json(errorResponse)
-            return
-          }
-          const successResponse = new SuccessResponseUtil({
-            message: "user deleted successfully",
-            data: deletedUser,
-          })
-          res.status(StatusCodes.OK).json(successResponse)
-        } catch (error) {
-          console.error("error deleting user:", error)
-          const errorResponse = new ErrorResponseUtil().setError("failed to delete user")
-          res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse)
-        }
-      }
+      const response = new SuccessResponseUtil({
+        message: "Users loaded successfully.",
+        data: users,
+      })
+      res.status(StatusCodes.OK).json(response)
+    } catch (err) {
+      console.error("Error fetching users:", err)
+      const error = new ErrorResponseUtil().setError(
+        "Unable to load users right now. Please try again."
+      )
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    }
+  }
 
-      static async updateRole(req: Request, res: Response, next: NextFunction): Promise<void> {
-        const userID: string = req.params.id as string;
-        const { role } = req.body;
-        
-        if (!["user", "admin", "super_admin"].includes(role)) {
-          const errorResponse = new ErrorResponseUtil().setError("invalid role");
-          res.status(StatusCodes.BAD_REQUEST).json(errorResponse);
-          return;
-        }
-
-        try {
-          const updatedUser = await UserService.UpdateUser(userID, { role });
-          if (!updatedUser) {
-            const errorResponse = new ErrorResponseUtil().setError("user not found");
-            res.status(StatusCodes.NOT_FOUND).json(errorResponse);
-            return;
-          }
-          const successResponse = new SuccessResponseUtil({
-            message: "user role updated successfully",
-            data: updatedUser,
-          });
-          res.status(StatusCodes.OK).json(successResponse);
-        } catch (error) {
-          console.error("Error updating user role:", error);
-          const errorResponse = new ErrorResponseUtil().setError("Failed to update user role");
-          res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
-        }
+  static async getUserByID(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const user = await UserService.getUserByID(String(req.params.id))
+      if (!user) {
+        const error = new ErrorResponseUtil().setError(
+          "User not found. They may have been removed or the ID is incorrect."
+        )
+        res.status(StatusCodes.NOT_FOUND).json(error)
+        return
       }
+      const response = new SuccessResponseUtil({
+        message: "User loaded successfully.",
+        data: user,
+      })
+      res.status(StatusCodes.OK).json(response)
+    } catch (err) {
+      console.error("Error fetching user:", err)
+      const error = new ErrorResponseUtil().setError(
+        "Unable to load this user right now. Please try again."
+      )
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    }
+  }
+
+  static async updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const updatedUser = await UserService.UpdateUser(String(req.params.id), req.body)
+      if (!updatedUser) {
+        const error = new ErrorResponseUtil().setError(
+          "User not found. They may have been removed or the ID is incorrect."
+        )
+        res.status(StatusCodes.NOT_FOUND).json(error)
+        return
+      }
+      const response = new SuccessResponseUtil({
+        message: "User updated successfully.",
+        data: updatedUser,
+      })
+      res.status(StatusCodes.OK).json(response)
+    } catch (err) {
+      console.error("Error updating user:", err)
+      const error = new ErrorResponseUtil().setError(
+        "Unable to update this user right now. Please try again."
+      )
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    }
+  }
+
+  static async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const deletedUser = await UserService.DeleteUser(String(req.params.id))
+      if (!deletedUser) {
+        const error = new ErrorResponseUtil().setError(
+          "User not found. They may have already been removed."
+        )
+        res.status(StatusCodes.NOT_FOUND).json(error)
+        return
+      }
+      const response = new SuccessResponseUtil({
+        message: "User deleted successfully.",
+        data: deletedUser,
+      })
+      res.status(StatusCodes.OK).json(response)
+    } catch (err) {
+      console.error("Error deleting user:", err)
+      const error = new ErrorResponseUtil().setError(
+        "Unable to delete this user right now. Please try again."
+      )
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    }
+  }
+
+  static async updateRole(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const { role } = req.body
+
+    if (!["user", "admin", "super_admin"].includes(role)) {
+      const error = new ErrorResponseUtil().setError(
+        "Invalid role. Must be one of: user, admin, or super_admin."
+      )
+      res.status(StatusCodes.BAD_REQUEST).json(error)
+      return
+    }
+
+    try {
+      const updatedUser = await UserService.UpdateUser(String(req.params.id), { role })
+      if (!updatedUser) {
+        const error = new ErrorResponseUtil().setError(
+          "User not found. They may have been removed or the ID is incorrect."
+        )
+        res.status(StatusCodes.NOT_FOUND).json(error)
+        return
+      }
+      const response = new SuccessResponseUtil({
+        message: "User role updated successfully.",
+        data: updatedUser,
+      })
+      res.status(StatusCodes.OK).json(response)
+    } catch (err) {
+      console.error("Error updating user role:", err)
+      const error = new ErrorResponseUtil().setError(
+        "Unable to update the user role right now. Please try again."
+      )
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(error)
+    }
+  }
 }

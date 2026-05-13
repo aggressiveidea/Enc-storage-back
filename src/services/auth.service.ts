@@ -34,7 +34,17 @@ export class AuthService {
       otpExpires,
     })
 
-    await EmailService.sendOTPEmail(user.email, otpCode)
+    const emailSent = await EmailService.sendOTPEmail(user.email, otpCode)
+
+    if (!emailSent) {
+      console.error(`Failed to send OTP email to ${user.email}`)
+      return {
+        requiresOTP: true,
+        tempToken: null,
+        email: user.email,
+        emailWarning: "We couldn't send the OTP email. You can use a backup code, or try again in a moment.",
+      }
+    }
 
     const tempToken = await JwtUtil.createTempToken(user.id, "otp")
 
@@ -124,7 +134,11 @@ export class AuthService {
       otpExpires,
     })
 
-    await EmailService.sendOTPEmail(user.email, otpCode)
+    const emailSent = await EmailService.sendOTPEmail(user.email, otpCode)
+
+    if (!emailSent) {
+      return { success: false, message: "We couldn't send the OTP email. Please try again in a moment." }
+    }
 
     const newTempToken = await JwtUtil.createTempToken(user.id, "otp")
 
@@ -172,11 +186,13 @@ export class AuthService {
 
     const frontUrl = process.env.FRONT_URL || "http://localhost:5173"
     const verificationLink = `${frontUrl}/verify-email/${verificationToken}`
-    await EmailService.sendVerificationEmail(user.email, verificationLink)
+    const emailSent = await EmailService.sendVerificationEmail(user.email, verificationLink)
 
     return {
       success: true,
-      message: "Account created. Please check your email to verify your address.",
+      message: emailSent
+        ? "Account created. Please check your email to verify your address."
+        : "Account created, but we couldn't send the verification email. You can request a new one from the login page.",
       email: user.email,
     }
   }
@@ -194,9 +210,13 @@ export class AuthService {
       resetPasswordToken: resetToken,
       resetPasswordExpires: resetTokenExpiry,
     })
-    const frontUrl = process.env.FRONT_URL || "http://localhost:5173";
-    const resetLink = `${frontUrl}/reset-password/${resetToken}`;
-    await EmailService.sendPasswordResetEmail(user.email, resetLink);
+    const frontUrl = process.env.FRONT_URL || "http://localhost:5173"
+    const resetLink = `${frontUrl}/reset-password/${resetToken}`
+    const emailSent = await EmailService.sendPasswordResetEmail(user.email, resetLink)
+
+    if (!emailSent) {
+      console.error(`Failed to send password reset email to ${user.email}`)
+    }
 
     return {
       success: true,
@@ -321,7 +341,11 @@ export class AuthService {
 
     const frontUrl = process.env.FRONT_URL || "http://localhost:5173"
     const verificationLink = `${frontUrl}/verify-email/${verificationToken}`
-    await EmailService.sendVerificationEmail(user.email, verificationLink)
+    const emailSent = await EmailService.sendVerificationEmail(user.email, verificationLink)
+
+    if (!emailSent) {
+      return { success: false, message: "We couldn't send the verification email. Please try again in a moment." }
+    }
 
     return { success: true, message: "A new verification link has been sent to your email." }
   }

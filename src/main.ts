@@ -2,14 +2,15 @@ import "dotenv/config";
 import express from "express";
 import fs from "fs";
 import path from "path";
-import authRouter from "./routers/auth.router";
-import UserRouter from "./routers/User.router";
-import fileRouter from "./routers/file.routes";
-import auditRouter from "./routers/audit.router";
-import { connect } from "./config/db";
-import morgan from "morgan";
-import cors from "cors";
-import helmet from "helmet";
+import authRouter from "./routers/auth.router"
+import UserRouter from "./routers/User.router"
+import fileRouter from "./routers/file.routes"
+import auditRouter from "./routers/audit.router"
+import { connect } from "./config/db"
+import morgan from "morgan"
+import cors from "cors"
+import helmet from "helmet"
+import { errorHandler } from "./middlewares/errorHandler.middleware"
 
 const app = express();
 const PORT = process.env.PORT;
@@ -47,8 +48,11 @@ app.use("/api/audit", auditRouter);
 console.log("DEBUG: Audit routes registered");
 
 app.get("/health", (req, res) => {
-  res.status(200).json({ message: "Server is running!", port: PORT });
-});
+  res.status(200).json({ message: "Server is running!", port: PORT })
+})
+
+// Centralized error handler — must be registered after all routes
+app.use(errorHandler)
 
 app.listen(PORT, () => {
   console.log(`\n Server running on port ${PORT}`);
